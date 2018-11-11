@@ -1,3 +1,4 @@
+// Zbog get_num_threads() i get_thread_num() funkcija.
 #include <omp.h>
 
 #include <stdio.h>
@@ -9,6 +10,10 @@
 #include <vector>
 #include <iostream>
 #include<fstream>
+
+//#define DEBUG
+#define NUM_THREADS 8
+
 
 bool readColMajorMatrixFile(const char *fn, int &nr_row, int &nr_col, std::vector<float>&v)
 {
@@ -57,6 +62,7 @@ bool writeColMajorMatrixFile(const char *fn, int nr_row, int nr_col, std::vector
 #ifdef DEBUG
 	std::cerr << "Closed file:" << fn << std::endl;
 #endif
+
   return true;
 
 }
@@ -67,6 +73,7 @@ bool writeColMajorMatrixFile(const char *fn, int nr_row, int nr_col, std::vector
 
 void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, const float *A, int lda, const float *B, int ldb, float beta, float *C, int ldc )
 {
+
   if ((transa != 'N') && (transa != 'n')) {
     std::cerr << "unsupported value of 'transa' in regtileSgemm()" << std::endl;
     return;
@@ -75,30 +82,39 @@ void basicSgemm( char transa, char transb, int m, int n, int k, float alpha, con
   if ((transb != 'T') && (transb != 't')) {
     std::cerr << "unsupported value of 'transb' in regtileSgemm()" << std::endl;
     return;
-  }
-  
-  for (int mm = 0; mm < m; ++mm) {
-    for (int nn = 0; nn < n; ++nn) {
-      float c = 0.0f;
-      for (int i = 0; i < k; ++i) {
-        float a = A[mm + i * lda]; 
-        float b = B[nn + i * ldb];
-        c += a * b;
-      }
-      C[mm+nn*ldc] = C[mm+nn*ldc] * beta + alpha * c;
-    }
-  }
-}
+  }	
 
+
+#pragma omp parallel for 
+
+		for (int mm = 0; mm < m; ++mm) {
+
+#pragma omp task 
+			{
+		  for (int nn = 0; nn < n; ++nn) {
+			
+		    float c = 0.0f;
+		    for (int i = 0; i < k; ++i) {
+					float a = A[mm + i * lda]; 
+					float b = B[nn + i * ldb];
+					c += a * b;
+		    }
+		    C[mm+nn*ldc] = C[mm+nn*ldc] * beta + alpha * c;
+			}
+		  } // task
+		}
+} 
 int main (int argc, char *argv[]) {
 
 	double timeStart, timeEnd;
 
-	timeStart = omp_get_wtime();
-
   int matArow, matAcol;
   int matBrow, matBcol;
   std::vector<float> matA, matBT;
+
+	timeStart = omp_get_wtime();
+
+	omp_set_num_threads(NUM_THREADS);
 
    if (argc != 4)  
   {
