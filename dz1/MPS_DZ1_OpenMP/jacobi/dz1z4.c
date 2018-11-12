@@ -4,9 +4,14 @@
 
 #include <omp.h>
 
+#define NUM_THREADS 1
+
+/*
+  paralelno izvrsavanje je mnog sporije kod malih fajlova (500 i 1000) - 8 niti
+*/
+
 int main(int argc, char *argv[])
 {
-
   double *b;
   double d;
   int i;
@@ -17,6 +22,10 @@ int main(int argc, char *argv[])
   double t;
   double *x;
   double *xnew;
+
+  double start, end;
+
+  start = omp_get_wtime();
 
   if (argc == 3)
   {
@@ -29,10 +38,13 @@ int main(int argc, char *argv[])
     n = 50000;
   }
 
+  omp_set_num_threads(NUM_THREADS);
+
   b = (double *)malloc(n * sizeof(double));
   x = (double *)malloc(n * sizeof(double));
   xnew = (double *)malloc(n * sizeof(double));
 
+  
   printf("\n");
   printf("JACOBI_OPENMP:\n");
   printf("  C/OpenMP version\n");
@@ -71,54 +83,55 @@ int main(int argc, char *argv[])
       Jacobi update + Difference.
     */
     d = 0.0;
-    #pragma omp parallel
+#pragma omp parallel
     {
-      #pragma omp for
-        for (i = 0; i < n; i++)
+#pragma omp for reduction(+: d)
+      for (i = 0; i < n; i++)
+      {
+        xnew[i] = b[i];
+        if (0 < i)
         {
-          xnew[i] = b[i];
-          if (0 < i)
-          {
-            xnew[i] = xnew[i] + x[i - 1];
-          }
-          if (i < n - 1)
-          {
-            xnew[i] = xnew[i] + x[i + 1]; // radi se samo read nad nizom x -- nema potrebe za sinhronizacijom
-          }
-          xnew[i] = xnew[i] / 2.0;
-          d = d + pow(x[i] - xnew[i], 2);
+          xnew[i] = xnew[i] + x[i - 1];
         }
-        // ---> End for.    
+        if (i < n - 1)
+        {
+          xnew[i] = xnew[i] + x[i + 1]; // radi se samo read nad nizom x -- nema potrebe za sinhronizacijom
+        }
+        xnew[i] = xnew[i] / 2.0;
+        d = d + pow(x[i] - xnew[i], 2);
+      }
+// ---> End for.
 
-        /*
+/*
           Synchronise point + Overwrite old solution.
         */
-        #pragma omp for
-        for (i = 0; i < n; i++)
-        {
-          x[i] = xnew[i];
-        }
+#pragma omp for
+      for (i = 0; i < n; i++)
+      {
+        x[i] = xnew[i];
+      }
 
-        /*
+/*
         Residual -- reduction.
         */
-        #pragma omp single
-          r = 0.0;
-        
-        #pragma omp for reduction(+:r) private(t)
-        for (i = 0; i < n; i++)
+#pragma omp single
+      r = 0.0;
+
+#pragma omp for reduction(+ \
+                          : r) private(t)
+      for (i = 0; i < n; i++)
+      {
+        t = b[i] - 2.0 * x[i];
+        if (0 < i)
         {
-          t = b[i] - 2.0 * x[i];
-          if (0 < i)
-          {
-            t = t + x[i - 1];
-          }
-          if (i < n - 1)
-          {
-            t = t + x[i + 1];
-          }
-          r = r + t * t;
+          t = t + x[i - 1];
         }
+        if (i < n - 1)
+        {
+          t = t + x[i + 1];
+        }
+        r = r + t * t;
+      }
 
     } // ---> End parallel.
 
@@ -130,7 +143,6 @@ int main(int argc, char *argv[])
     {
       printf("  Omitting intermediate results.\n");
     }
-
 
   } // ---> End M-iteration loop.
 
@@ -155,6 +167,13 @@ int main(int argc, char *argv[])
   free(b);
   free(x);
   free(xnew);
+
+  end = omp_get_wtime();
+
+  printf("*****************DZ1Z4******************\n");
+  printf("  Number of threads : %d\n", NUM_THREADS);
+  printf("  Time elapsed: %.7f\n", end - start);
+  printf("*****************************************\n");
 
   return 0;
 }
