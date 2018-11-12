@@ -87,33 +87,32 @@ void basicSgemm(char transa, char transb, int m, int n, int k, float alpha, cons
     return;
   }
 
-#pragma omp parallel for
-// #pragma omp parallel
-// {
-
-// #pragma omp singe
-// {
-  for (int mm = 0; mm < m; ++mm)
+#pragma omp parallel
   {
 
-#pragma omp task
+#pragma omp single
     {
-      for (int nn = 0; nn < n; ++nn)
+      for (int mm = 0; mm < m; ++mm)
       {
 
-        float c = 0.0f;
-        for (int i = 0; i < k; ++i)
+#pragma omp task default(none) shared(A, B, C, n, k, lda, ldb, ldc, alpha, beta), firstprivate(mm)
         {
-          float a = A[mm + i * lda];
-          float b = B[nn + i * ldb];
-          c += a * b;
-        }
-        C[mm + nn * ldc] = C[mm + nn * ldc] * beta + alpha * c;
+          for (int nn = 0; nn < n; ++nn)
+          {
+
+            float c = 0.0f;
+            for (int i = 0; i < k; ++i)
+            {
+              float a = A[mm + i * lda];
+              float b = B[nn + i * ldb];
+              c += a * b;
+            }
+            C[mm + nn * ldc] = C[mm + nn * ldc] * beta + alpha * c;
+          }
+        } // task
       }
-    } // task
-  }
-// } // single
-// } // parallel
+    } // single
+  }   // parallel
 }
 int main(int argc, char *argv[])
 {
