@@ -1,11 +1,28 @@
-./jacobi 5000 500
-./dz1z4 5000 500
+: '
 
-./jacobi 10000 1000
-./dz1z4 10000 1000
+./jacobi 5000 500 | tee output_small_seq.txt
+./dz1z4_task 5000 500 | tee output_small_par.txt
 
-./jacobi 50000 5000
-./dz1z4 50000 5000
+./jacobi 10000 1000 | tee output_med_seq.txt
+./dz1z4_task 10000 1000 | tee output_med_par.txt
 
-./jacobi 100000 10000
-./dz1z4 100000 10000
+./jacobi 50000 5000 | tee output_large_seq.txt
+./dz1z4_task 50000 5000 | tee output_large_par.txt
+
+./jacobi 100000 10000 | tee output_very_large_seq.txt
+./dz1z4_task 100000 10000 | tee output_very_large_par.txt
+
+'
+
+
+./jacobi 5000 500 | tee output_small_seq.txt
+./dz1z4 5000 500 | tee output_small_par.txt
+
+./jacobi 10000 1000 | tee output_med_seq.txt
+./dz1z4 10000 1000 | tee output_med_par.txt
+
+./jacobi 50000 5000 | tee output_large_seq.txt
+./dz1z4 50000 5000 | tee output_large_par.txt
+
+./jacobi 100000 10000 | tee output_very_large_seq.txt
+./dz1z4 100000 10000 | tee output_very_large_par.txt

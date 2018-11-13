@@ -6,10 +6,10 @@ prime:
 	$(CC) $(CC_FLAGS) dz1z1.cpp -o dz1z1 -lm 
 	$(CC) $(CC_FLAGS) dz1z2.cpp -o dz1z2 -lm 
 #	$(CC) $(CC_FLAGS) dz1z3.cpp -o dz1z3 -lm 
-#	$(CC) $(CC_FLAGS) dz1z3_single_coarse.cpp -o dz1z3 -lm 
-#	$(CC) $(CC_FLAGS) dz1z3_single_fine.cpp -o dz1z3 -lm 
-#	$(CC) $(CC_FLAGS) dz1z3_for_coarse.cpp -o dz1z3 -lm 
-	$(CC) $(CC_FLAGS) dz1z3_for_fine.cpp -o dz1z3 -lm 
+	$(CC) $(CC_FLAGS) dz1z3_single_coarse.cpp -o dz1z3_single_coarse -lm 
+	$(CC) $(CC_FLAGS) dz1z3_single_fine.cpp -o dz1z3_single_fine -lm 
+	$(CC) $(CC_FLAGS) dz1z3_for_coarse.cpp -o dz1z3_for_coarse -lm 
+	$(CC) $(CC_FLAGS) dz1z3_for_fine.cpp -o dz1z3_for_fine -lm 
 	
 	$(CC) $(CC_FLAGS) sgemm.cc -o sgemm -lm 
 

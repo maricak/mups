@@ -20,5 +20,8 @@ kmeans.o: kmeans.c
 kmeans_clustering.o: kmeans_clustering.c kmeans.h
 	$(CC) $(CC_FLAGS) kmeans_clustering.c -c
 
+dz1z5: 
+	$(CC) $(CC_FLAGS) dz1z5.c -o dz1z5
+
 clean:
 	rm -f *.o *~ kmeans 

@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
   x = (double *)malloc(n * sizeof(double));
   xnew = (double *)malloc(n * sizeof(double));
 
-  
   printf("\n");
   printf("JACOBI_OPENMP:\n");
   printf("  C/OpenMP version\n");
@@ -53,7 +52,6 @@ int main(int argc, char *argv[])
   printf("  IT     l2(dX)    l2(resid)\n");
   printf("\n");
 
-#pragma omp parallel for
   /*
   Set up the right hand side.
   +
@@ -65,8 +63,6 @@ int main(int argc, char *argv[])
     b[i] = 0.0;
     x[i] = 0.0;
   }
-
-  // ---> End parallel.
 
   b[n - 1] = (double)(n + 1);
 
@@ -81,54 +77,68 @@ int main(int argc, char *argv[])
     d = 0.0;
 #pragma omp parallel
     {
-#pragma omp for reduction(+: d)
-      for (i = 0; i < n; i++)
+#pragma omp single
       {
-        xnew[i] = b[i];
-        if (0 < i)
+#pragma omp task shared(d)
         {
-          xnew[i] = xnew[i] + x[i - 1];
+          for (i = 0; i < n; i++)
+          {
+            xnew[i] = b[i];
+            if (0 < i)
+            {
+              xnew[i] = xnew[i] + x[i - 1];
+            }
+            if (i < n - 1)
+            {
+              xnew[i] = xnew[i] + x[i + 1]; // radi se samo read nad nizom x -- nema potrebe za sinhronizacijom
+            }
+            xnew[i] = xnew[i] / 2.0;
+            d = d + pow(x[i] - xnew[i], 2);
+          }
         }
-        if (i < n - 1)
-        {
-          xnew[i] = xnew[i] + x[i + 1]; // radi se samo read nad nizom x -- nema potrebe za sinhronizacijom
-        }
-        xnew[i] = xnew[i] / 2.0;
-        d = d + pow(x[i] - xnew[i], 2);
-      }
-// ---> End for.
 
-/*
+#pragma omp taskwait
+
+#pragma omp task
+        {
+          for (i = 0; i < n; i++)
+          {
+            x[i] = xnew[i];
+          }
+        }
+
+
+#pragma omp taskwait
+r = 0.0;
+
+      
+
+#pragma omp task shared(r)
+      {
+        for (i = 0; i < n; i++)
+        {
+          t = b[i] - 2.0 * x[i];
+          if (0 < i)
+          {
+            t = t + x[i - 1];
+          }
+          if (i < n - 1)
+          {
+            t = t + x[i + 1];
+          }
+          r = r + t * t;
+        }
+      }
+      
+      }
+      // ---> End for.
+      /*
           Synchronise point + Overwrite old solution.
         */
-#pragma omp for
-      for (i = 0; i < n; i++)
-      {
-        x[i] = xnew[i];
-      }
 
-/*
+/*   
         Residual -- reduction.
         */
-#pragma omp single
-      r = 0.0;
-
-#pragma omp for reduction(+ \
-                          : r) private(t)
-      for (i = 0; i < n; i++)
-      {
-        t = b[i] - 2.0 * x[i];
-        if (0 < i)
-        {
-          t = t + x[i - 1];
-        }
-        if (i < n - 1)
-        {
-          t = t + x[i + 1];
-        }
-        r = r + t * t;
-      }
-
     } // ---> End parallel.
 
     if (it < 10 || m - 10 < it)

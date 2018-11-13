@@ -12,7 +12,7 @@
 #include <fstream>
 
 //#define DEBUG
-#define NUM_THREADS 8
+#define NUM_THREADS 1
 
 bool readColMajorMatrixFile(const char *fn, int &nr_row, int &nr_col, std::vector<float> &v)
 {
