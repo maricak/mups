@@ -1,0 +1,16 @@
+- ceo main se ne moze paralelizovati, vec se paralelizuje kod koji se izvrsava u for nloops petlji
+
+- kod iz kmeans.c i  cluster.c se ne paralelizuje (zato sto postoje iteracije gde je za narednu informaciju neophodna zavrsena prethodna iteracija)
+
+- lin. 72 kmeans_clustering - sala - moze paralelizacija uz promenu koda
+
+- lin. 77 - ubacen kod iz for petlje u prethodnu petlju (moze ako je n random generisan broj, tj. ako je otkomentarisano n = rand...)
+
+- lin. 86 - paralelizovano
+
+- lin. 94 - isto kao 77
+
+- lin. 137 - coarse grain paralelizacija
+
+- lin. 26
+- lin. 48 - oba, paralelizovana for petlja, nista spec, drugo je redukcija
