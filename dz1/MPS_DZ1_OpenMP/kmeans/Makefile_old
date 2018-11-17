@@ -2,8 +2,8 @@
 CC = gcc
 CC_FLAGS = -g -fopenmp -O2 
 
-kmeans: cluster.o getopt.o kmeans.o kmeans_clustering_dz5.o 
-	$(CC) $(CC_FLAGS) cluster.o getopt.o kmeans.o kmeans_clustering_dz5.o  -o kmeans
+kmeans: cluster.o getopt.o kmeans.o kmeans_clustering.o 
+	$(CC) $(CC_FLAGS) cluster.o getopt.o kmeans.o kmeans_clustering.o  -o kmeans
 
 %.o: %.[ch]
 	$(CC) $(CC_FLAGS) $< -c
@@ -17,8 +17,8 @@ getopt.o: getopt.c
 kmeans.o: kmeans.c 
 	$(CC) $(CC_FLAGS) kmeans.c -c
 
-kmeans_clustering_dz5.o: kmeans_clustering_dz5.c kmeans.h
-	$(CC) $(CC_FLAGS) kmeans_clustering_dz5.c -c
+kmeans_clustering.o: kmeans_clustering.c kmeans.h
+	$(CC) $(CC_FLAGS) kmeans_clustering.c -c
 
 dz1z5: 
 	$(CC) $(CC_FLAGS) dz1z5.c -o dz1z5

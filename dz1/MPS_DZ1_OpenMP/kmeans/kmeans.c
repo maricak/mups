@@ -10,6 +10,8 @@
 
 #include "kmeans.h"
 
+#define NUM_THREADS 8
+
 extern double wtime(void);
 
 /*---< usage() >------------------------------------------------------------*/
@@ -132,7 +134,10 @@ int main(int argc, char **argv) {
 
 	memcpy(attributes[0], buf, numObjects*numAttributes*sizeof(float));
 
+    omp_set_num_threads(NUM_THREADS);
+
 	timing = omp_get_wtime();
+//#pragma omp parallel for - nije podrzano u nekim implementacijama openMP
     for (i=0; i<nloops; i++) {
         		
         cluster_centres = NULL;
@@ -148,9 +153,10 @@ int main(int argc, char **argv) {
     }
     timing = omp_get_wtime() - timing;
 
+    printf("number of thread: %d\n", NUM_THREADS);
 	printf("number of Clusters %d\n",nclusters); 
 	printf("number of Attributes %d\n\n",numAttributes); 
-    /*printf("Cluster Centers Output\n"); 
+    printf("Cluster Centers Output\n"); 
 	printf("The first number is cluster number and the following data is arribute value\n");
 	printf("=============================================================================\n\n");
 	
@@ -159,7 +165,7 @@ int main(int argc, char **argv) {
         for (j=0; j<numAttributes; j++)
             printf("%f ", cluster_centres[i][j]);
         printf("\n\n");
-    }*/
+    }
 	printf("Time for process: %f\n", timing);
 
     free(attributes);
