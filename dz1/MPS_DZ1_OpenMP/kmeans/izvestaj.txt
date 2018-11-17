@@ -8,6 +8,8 @@
 
 - lin. 86 - paralelizovano
 
+- lin. 90 - zavisnost po podacima - ne moze da se paralelizuje
+
 - lin. 94 - isto kao 77
 
 - lin. 137 - coarse grain paralelizacija
