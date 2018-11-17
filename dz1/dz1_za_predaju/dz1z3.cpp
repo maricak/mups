@@ -184,12 +184,12 @@ int main(int argc, char *argv[])
   // Use standard sgemm interface
   timeStart = omp_get_wtime();
   basicSgemm('N', 'T', matArow, matBcol, matAcol, 1.0f, &matA.front(), matArow, &matBT.front(), matBcol, 0.0f, &matC.front(), matArow);
-  timePar = omp_get_wtime() - timeStart;
+  timeSeq = omp_get_wtime() - timeStart;
 
   // Use parallel sgemm interface
   timeStart = omp_get_wtime();
   basicSgemm_par('N', 'T', matArow, matBcol, matAcol, 1.0f, &matA.front(), matArow, &matBT.front(), matBcol, 0.0f, &matD.front(), matArow);
-  timeSeq = omp_get_wtime() - timeStart;
+  timePar = omp_get_wtime() - timeStart;
 
   /* Write result */
   writeColMajorMatrixFile(argv[3], matArow, matBcol, matD);

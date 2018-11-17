@@ -270,12 +270,12 @@ int main(int argc, char *argv[])
   // Use standard jacobi interface
   timeStart = omp_get_wtime();
   xSeq = jacobi_seq(m, n);
-  timePar = omp_get_wtime() - timeStart;
+  timeSeq = omp_get_wtime() - timeStart;
 
   // Use parallel jacobi interface
   timeStart = omp_get_wtime();
   xPar = jacobi_par(m, n);
-  timeSeq = omp_get_wtime() - timeStart;
+  timePar = omp_get_wtime() - timeStart;
 
   std::function<bool(double, double)> comparator = [](double left, double right) {
     // Lambda function to compare 2 doubles with ACCURACY
@@ -289,6 +289,10 @@ int main(int argc, char *argv[])
   std::cerr << "Elapsed time - PAR(" << N << "): " << timePar << "." << std::endl;
   std::cerr << (std::equal(vectorPar.begin(), vectorPar.end(), vectorSeq.begin(), comparator) ? "TEST PASSED" : "TEST FAILED") << std::endl;
   std::cerr << "***********************************************" << std::endl;
+
+
+  free(xSeq);
+  free(xPar);
 
   return 0;
 }
