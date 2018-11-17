@@ -12,7 +12,7 @@
 #include <fstream>
 
 //#define DEBUG
-#define NUM_THREADS 1
+#define N 1
 
 bool readColMajorMatrixFile(const char *fn, int &nr_row, int &nr_col, std::vector<float> &v)
 {
@@ -89,32 +89,35 @@ void basicSgemm(char transa, char transb, int m, int n, int k, float alpha, cons
     return;
   }
 
-#ifndef DEBUG
+
 #pragma omp parallel default(none) \
     shared(chunk, m, n, k, A, B, C, lda, ldb, ldc, beta, alpha)
-#else
-#pragma omp parallel
-#endif
   {
 
 #pragma omp single
     {
       chunk = (omp_get_num_threads() + m) / omp_get_num_threads();
+
 #ifdef DEBUG
       std::cerr << "omp_get_num_threads: " << omp_get_num_threads() << std::endl;
       std::cerr << "m: " << m << std::endl;
       std::cerr << "chunk: " << chunk << std::endl;
 #endif
+
+
     } // single
 
     int start = omp_get_thread_num() * chunk;
     int end = start + chunk < m ? start + chunk : m;
+
 
 #ifdef DEBUG
     std::cerr << "STARTED my id: " << omp_get_thread_num() << std::endl;
     std::cerr << "start: " << start << std::endl;
     std::cerr << "end: " << end << std::endl;
 #endif
+
+
 
     for (int mm = start; mm < end; ++mm)
     {
@@ -148,7 +151,7 @@ int main(int argc, char *argv[])
 
   timeStart = omp_get_wtime();
 
-  omp_set_num_threads(NUM_THREADS);
+  omp_set_num_threads(N);
 
   if (argc != 4)
   {
@@ -175,7 +178,7 @@ int main(int argc, char *argv[])
 
   std::cerr << "********************DZ1Z1**********************" << std::endl;
   std::cerr << "Elapsed time: " << timeEnd - timeStart << "." << std::endl;
-  std::cerr << "Number of threads: " << NUM_THREADS << std::endl;
+  std::cerr << "Number of threads: " << N << std::endl;
   std::cerr << "***********************************************" << std::endl;
 
   return 0;
