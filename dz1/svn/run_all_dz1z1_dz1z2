@@ -1,0 +1,59 @@
+./sgemm data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_seq.txt
+./sgemm data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_seq.txt
+
+./dz1z1_1 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z1_1 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+./cmp_files result_small_seq.txt result_small_par.txt
+./cmp_files result_medium_seq.txt result_medium_par.txt
+
+
+./dz1z1_2 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z1_2 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+./cmp_files result_small_seq.txt result_small_par.txt
+./cmp_files result_medium_seq.txt result_medium_par.txt
+
+
+./dz1z1_4 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z1_4 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+./cmp_files result_small_seq.txt result_small_par.txt
+./cmp_files result_medium_seq.txt result_medium_par.txt
+
+
+./dz1z1_8 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z1_8 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+./cmp_files result_small_seq.txt result_small_par.txt
+./cmp_files result_medium_seq.txt result_medium_par.txt
+
+
+
+./dz1z2_1 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z2_1 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+./cmp_files result_small_seq.txt result_small_par.txt
+./cmp_files result_medium_seq.txt result_medium_par.txt
+
+
+./dz1z2_2 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z2_2 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+./cmp_files result_small_seq.txt result_small_par.txt
+./cmp_files result_medium_seq.txt result_medium_par.txt
+
+
+./dz1z2_4 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z2_4 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+./cmp_files result_small_seq.txt result_small_par.txt
+./cmp_files result_medium_seq.txt result_medium_par.txt
+
+
+
+./dz1z2_8 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z2_8 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+./cmp_files result_small_seq.txt result_small_par.txt
+./cmp_files result_medium_seq.txt result_medium_par.txt
