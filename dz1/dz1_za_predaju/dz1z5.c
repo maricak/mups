@@ -1392,70 +1392,62 @@ float **kmeans_clustering_par(float **feature, /* in: [npoints][nfeatures] */
                               int *membership) /* out: [npoints] */
 {
 
-  int i, j, n = 0, index, loop = 0;
+  int i, j, k, n = 0, index, loop = 0;
   int *new_centers_len; /* [nclusters]: no. of points in each cluster */
   float delta;
   float **clusters;    /* out: [nclusters][nfeatures] */
   float **new_centers; /* [nclusters][nfeatures] */
 
-  // Lock inicijalizacija
+  // Helper variables.
 
-  omp_lock_t *new_centers_locks = malloc(npoints * sizeof(omp_lock_t));
-  for (i = 0; i < npoints; i++)
-  {
-    omp_init_lock(&new_centers_locks[i]);
-  }
+  float*** local_new_centers;
+  int** local_new_centers_len;
 
-  // --> end lock
+/* allocate space for returning variable clusters[] */
+    clusters    = (float**) malloc(nclusters *             sizeof(float*));
+    clusters[0] = (float*)  malloc(nclusters * nfeatures * sizeof(float));
+    for (i=1; i<nclusters; i++)
+        clusters[i] = clusters[i-1] + nfeatures;
 
-  /* allocate space for returning variable clusters[] */
-  clusters = (float **)malloc(nclusters * sizeof(float *));
-  clusters[0] = (float *)malloc(nclusters * nfeatures * sizeof(float));
-#pragma omp parallel default(none) private(i, n, j) \
-    shared(nclusters, nfeatures, feature, npoints, membership, new_centers_len, new_centers, clusters)
-  {
-#pragma omp for
-    for (i = 1; i < nclusters; i++)
-    {
-      clusters[i] = clusters[0] + i * nfeatures;
-    }
-/* randomly pick cluster centers */
-#pragma omp single
-    {
-      for (i = 0; i < nclusters; i++)
-      {
+    /* randomly pick cluster centers */
+    for (i=0; i<nclusters; i++) {
         //n = (int)rand() % npoints;
-        for (j = 0; j < nfeatures; j++)
-          clusters[i][j] = feature[n][j];
-        n++;
-      }
+        for (j=0; j<nfeatures; j++)
+            clusters[i][j] = feature[n][j];
+		n++;
     }
 
-#pragma omp for
-    for (i = 0; i < npoints; i++)
-      membership[i] = -1;
+    for (i=0; i<npoints; i++)
+		membership[i] = -1;
 
-#pragma omp single
-    {
-      /* need to initialize new_centers_len and new_centers[0] to all 0 */
-      new_centers_len = (int *)calloc(nclusters, sizeof(int));
+    /* need to initialize new_centers_len and new_centers[0] to all 0 */
+    new_centers_len = (int*) calloc(nclusters, sizeof(int));
 
-      new_centers = (float **)malloc(nclusters * sizeof(float *));
-      new_centers[0] = (float *)calloc(nclusters * nfeatures, sizeof(float));
-    }
-
-#pragma omp for
-    for (i = 1; i < nclusters; i++)
-      new_centers[i] = new_centers[0] + i * nfeatures;
-  }
-
+    new_centers    = (float**) malloc(nclusters *            sizeof(float*));
+    new_centers[0] = (float*)  calloc(nclusters * nfeatures, sizeof(float));
+    for (i=1; i<nclusters; i++)
+        new_centers[i] = new_centers[i-1] + nfeatures;
   do
   {
 
     delta = 0.0;
 
+    // Allocate local thread array and matrix.
+    local_new_centers_len = (int**) malloc(N * sizeof(int*));
+    for (i = 0; i < N; i++) {
+      local_new_centers_len[i] = (int*) calloc(nclusters, sizeof(int));
+    }
+
+    local_new_centers = (float***) malloc(N * sizeof(float**));
+    for (i = 0; i < N; i++) {
+      local_new_centers[i] = (float**) malloc (nclusters * sizeof(float*));
+      local_new_centers[i][0] = (float*) calloc (nclusters * nfeatures, sizeof(float));
+      for (k = 0; k < nclusters; k++)
+        local_new_centers[i][k] = local_new_centers[i][0] + k * nfeatures;
+    }
+
 #pragma omp parallel for default(none) private(i, j, index)                                                               \
-    shared(npoints, feature, nfeatures, clusters, nclusters, membership, new_centers_len, new_centers, new_centers_locks) \
+    shared(npoints, feature, nfeatures, clusters, nclusters, membership, local_new_centers_len, local_new_centers) \
         reduction(+                                                                                                       \
                   : delta)
     for (i = 0; i < npoints; i++)
@@ -1470,12 +1462,28 @@ float **kmeans_clustering_par(float **feature, /* in: [npoints][nfeatures] */
       membership[i] = index;
 
       /* update new cluster centers : sum of objects located within */
-      omp_set_lock(&(new_centers_locks[index]));
-      new_centers_len[index]++;
-      for (j = 0; j < nfeatures; j++)
-        new_centers[index][j] += feature[i][j];
-      omp_unset_lock(&(new_centers_locks[index]));
+
+      local_new_centers_len[omp_get_thread_num()][index]++;
+      for (j = 0; j <nfeatures; j++) 
+        local_new_centers[omp_get_thread_num()][index][j] += feature[i][j];
     }
+
+
+    // Perform reduction of local_new_centers_len and local_new_centers manually.
+    for (i = 0; i < N; i++) {
+      for (j = 0; j < nclusters; j++) {
+        new_centers_len[j] += local_new_centers_len[i][j];
+      }
+    }
+    for (i = 0; i < N; i++) {
+      for (j = 0; j < nclusters; j++) {
+        for (k = 0; k < nfeatures; k++) {
+          new_centers[j][k] += local_new_centers[i][j][k];
+        }
+      }
+    }
+
+
 
     /* replace old cluster centers with new_centers */
 #pragma omp parallel for default(none) private(i, j) \
@@ -1491,14 +1499,19 @@ float **kmeans_clustering_par(float **feature, /* in: [npoints][nfeatures] */
       new_centers_len[i] = 0; /* set back to 0 */
     }
 
+    // Deallocate local thread array and matrix.
+    for (i = 0; i < N; i++) {
+      free(local_new_centers_len[i]);
+    }
+    free(local_new_centers_len);
+
+    for (i = 0; i < N; i++) {
+      free(local_new_centers[i][0]);
+    }
+    free(local_new_centers);
+
     //delta /= npoints;
   } while (delta > threshold);
-
-  for (i = 0; i < npoints; i++)
-  {
-    omp_destroy_lock(&new_centers_locks[i]);
-  }
-  free(new_centers_locks);
 
   free(new_centers[0]);
   free(new_centers);
@@ -1641,7 +1654,6 @@ int main(int argc, char **argv)
     }
     fclose(infile);
   }
-
   nloops = 1;
   printf("I/O completed\n");
 
@@ -1690,7 +1702,7 @@ int main(int argc, char **argv)
   {
 
     cluster_centres_par = NULL;
-    cluster(numObjects,
+	  cluster_par(numObjects,
             numAttributes,
             attributes, /* [numObjects][numAttributes] */
             nclusters,
@@ -1733,7 +1745,6 @@ int main(int argc, char **argv)
   }
 
   printf(different ? "TEST FAILED\n" : "TEST PASSED\n");
-
   free(attributes);
   free(cluster_centres_seq[0]);
   free(cluster_centres_par[0]);
