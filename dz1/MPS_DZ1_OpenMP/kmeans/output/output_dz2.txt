@@ -1,0 +1,88 @@
+Opening file:data/small/input/matrix1.txt
+Matrix dimension: 128x96
+Opening file:data/small/input/matrix2t.txt
+Matrix dimension: 160x96
+Opening file:result_small_par.txt for write.
+Matrix dimension: 128x160
+********************DZ1Z2**********************
+Elapsed time - SEQ: 0.00144419.
+Elapsed time - PAR(1): 0.00146191.
+TEST PASSED
+***********************************************
+Opening file:data/medium/input/matrix1.txt
+Matrix dimension: 1024x992
+Opening file:data/medium/input/matrix2t.txt
+Matrix dimension: 1056x992
+Opening file:result_medium_par.txt for write.
+Matrix dimension: 1024x1056
+********************DZ1Z2**********************
+Elapsed time - SEQ: 11.8102.
+Elapsed time - PAR(1): 11.8144.
+TEST PASSED
+***********************************************
+Opening file:data/small/input/matrix1.txt
+Matrix dimension: 128x96
+Opening file:data/small/input/matrix2t.txt
+Matrix dimension: 160x96
+Opening file:result_small_par.txt for write.
+Matrix dimension: 128x160
+********************DZ1Z2**********************
+Elapsed time - SEQ: 0.00143754.
+Elapsed time - PAR(2): 0.000787277.
+TEST PASSED
+***********************************************
+Opening file:data/medium/input/matrix1.txt
+Matrix dimension: 1024x992
+Opening file:data/medium/input/matrix2t.txt
+Matrix dimension: 1056x992
+Opening file:result_medium_par.txt for write.
+Matrix dimension: 1024x1056
+********************DZ1Z2**********************
+Elapsed time - SEQ: 11.8193.
+Elapsed time - PAR(2): 5.91367.
+TEST PASSED
+***********************************************
+Opening file:data/small/input/matrix1.txt
+Matrix dimension: 128x96
+Opening file:data/small/input/matrix2t.txt
+Matrix dimension: 160x96
+Opening file:result_small_par.txt for write.
+Matrix dimension: 128x160
+********************DZ1Z2**********************
+Elapsed time - SEQ: 0.00146809.
+Elapsed time - PAR(4): 0.000457916.
+TEST PASSED
+***********************************************
+Opening file:data/medium/input/matrix1.txt
+Matrix dimension: 1024x992
+Opening file:data/medium/input/matrix2t.txt
+Matrix dimension: 1056x992
+Opening file:result_medium_par.txt for write.
+Matrix dimension: 1024x1056
+********************DZ1Z2**********************
+Elapsed time - SEQ: 11.878.
+Elapsed time - PAR(4): 2.96931.
+TEST PASSED
+***********************************************
+Opening file:data/small/input/matrix1.txt
+Matrix dimension: 128x96
+Opening file:data/small/input/matrix2t.txt
+Matrix dimension: 160x96
+Opening file:result_small_par.txt for write.
+Matrix dimension: 128x160
+********************DZ1Z2**********************
+Elapsed time - SEQ: 0.0014584.
+Elapsed time - PAR(8): 0.00161207.
+TEST PASSED
+***********************************************
+Opening file:data/medium/input/matrix1.txt
+Matrix dimension: 1024x992
+Opening file:data/medium/input/matrix2t.txt
+Matrix dimension: 1056x992
+Opening file:result_medium_par.txt for write.
+Matrix dimension: 1024x1056
+********************DZ1Z2**********************
+Elapsed time - SEQ: 11.8274.
+Elapsed time - PAR(8): 2.95951.
+TEST PASSED
+***********************************************

@@ -1,0 +1,240 @@
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.000168
+===================================PAR=======================================
+
+number of threads: 1
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.000167
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 2.130001
+===================================PAR=======================================
+
+number of threads: 1
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 2.129688
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.452037
+===================================PAR=======================================
+
+number of threads: 1
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.451945
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 1.914637
+===================================PAR=======================================
+
+number of threads: 1
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 1.899101
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.000247
+===================================PAR=======================================
+
+number of threads: 2
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.000245
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 2.135121
+===================================PAR=======================================
+
+number of threads: 2
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 2.133272
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.452108
+===================================PAR=======================================
+
+number of threads: 2
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.451645
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 1.909433
+===================================PAR=======================================
+
+number of threads: 2
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 1.932522
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.000350
+===================================PAR=======================================
+
+number of threads: 4
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.000348
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 2.133314
+===================================PAR=======================================
+
+number of threads: 4
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 2.133864
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.451870
+===================================PAR=======================================
+
+number of threads: 4
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.451897
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 1.912580
+===================================PAR=======================================
+
+number of threads: 4
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 1.898070
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.000183
+===================================PAR=======================================
+
+number of threads: 8
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.000181
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 2.130714
+===================================PAR=======================================
+
+number of threads: 8
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 2.130793
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.451810
+===================================PAR=======================================
+
+number of threads: 8
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 0.451846
+TEST PASSED
+I/O completed
+===================================SEQ=======================================
+
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 1.910907
+===================================PAR=======================================
+
+number of threads: 8
+number of Clusters 5
+number of Attributes 34
+
+Time for process: 1.895204
+TEST PASSED

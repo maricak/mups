@@ -15,7 +15,7 @@
 #include <algorithm>
 
 //#define DEBUG
-#define N 1
+#define N 8
 #define ACCURACY 0.01
 
 bool readColMajorMatrixFile(const char *fn, int &nr_row, int &nr_col, std::vector<float> &v)
