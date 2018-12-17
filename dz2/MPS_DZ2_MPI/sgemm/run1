@@ -1,0 +1,15 @@
+#mpirun -np 8 ./dz2z1 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+#mpirun -np 8 ./dz2z1 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+#mpirun -np 4 ./dz2z1 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+#mpirun -np 4 ./dz2z1 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+#mpirun -np 2 ./dz2z1 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+#mpirun -np 2 ./dz2z1 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+#mpirun -np 1 ./dz2z1 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+#mpirun -np 1 ./dz2z1 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+mpirun -np 5 ./dz2z1 data/srednja1.txt data/srednja2.txt result_mala_par.txt
+
+

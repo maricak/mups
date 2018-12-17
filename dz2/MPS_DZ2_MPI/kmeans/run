@@ -1,0 +1,4 @@
+./kmeans -i data/100
+./kmeans -i data/kdd_cup
+./kmeans -i data/204800.txt
+./kmeans -i data/819200.txt
