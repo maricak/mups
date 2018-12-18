@@ -118,6 +118,7 @@ void basicSgemm_par(char transa, char transb, int m, int n, int k, float alpha, 
       MPI_Abort(MPI_COMM_WORLD, -3);
     }
   }
+  // svi procesim treba da znaj dimenzije matrica  parametre alpha i beta
   MPI_Bcast(&m, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&n, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&k, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
@@ -129,27 +130,28 @@ void basicSgemm_par(char transa, char transb, int m, int n, int k, float alpha, 
   MPI_Bcast(&alpha, 1, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&beta, 1, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
 
-  chunk = m / size; // svaki proces obradjuje chunk redova izlazne matrice
+  // svaki proces obradjuje chunk redova izlazne matrice
+  chunk = m / size;
   //printf("RANK=%d, chunk=%d, m=%d, n=%d, k=%d, lds=%d, ldb=%d, ldc=%d, alpha-%f, beta=%f\n", rank, chunk, m, n, k, lda, ldb, ldc, alpha, beta);
 
   float *Abuff, *Bbuff, *Cbuff, *Atmp;
-  // alocirati prostor
-  Abuff = new float[chunk * k];
-  Atmp = new float[chunk * k];
+  // alociranje bafera za komunikaciju
+  Abuff = new float[chunk * k]; // redovi matice A
+  //Atmp = new float[chunk * k];
   if (rank != MASTER)
-    B = new float[k * n];
-  Cbuff = new float[chunk * n];
+    B = new float[k * n]; // matrica B
+  Cbuff = new float[chunk * n]; // redovi matice C
 
   /*MPI_Datatype chunk_col; // kolona sa chunk elemenata
   MPI_Type_vector(k, chunk, m, MPI_FLOAT, &chunk_col);
   MPI_Type_commit(&chunk_col);
 */
-  // matricaA - chunk redova
   //MPI_Scatter(A, 1, chunk_col, Abuff, 1, chunk_col, MASTER, MPI_COMM_WORLD);
+  // matricaA - chunk redova
   for (int i = 0; i < k; i++)
   {
     MPI_Scatter(&A[i * m], chunk, MPI_FLOAT, &Abuff[i * chunk], chunk, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-  }  
+  }
   //MPI_Scatter(A, 1, chunk_col, Atmp, chunk * k, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   /*printf("Proces %d: Abuff ", rank);
   for (int i = 0; i < chunk * k; i++)
@@ -176,6 +178,7 @@ void basicSgemm_par(char transa, char transb, int m, int n, int k, float alpha, 
   }
   printf("\n");
 */
+// izracunavanje
   for (int mm = 0; mm < chunk; ++mm)
   {
     for (int nn = 0; nn < n; ++nn)
@@ -216,6 +219,7 @@ void basicSgemm_par(char transa, char transb, int m, int n, int k, float alpha, 
     printf("\n");
   }*/
   //MPI_Type_free(&chunk_col);
+  // oslobadjanje bafera
   if (rank != MASTER)
   {
     delete Bbuff;

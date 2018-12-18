@@ -126,46 +126,55 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
 
     //printf("m=%d, n=%d, k=%d\n", m, n, k);
   }
+
+  // svi procesi treba da znaju velicine matrica i parametre alpha i beta
+  // mat A mxk --- matB kxn --- matC mxn
   MPI_Bcast(&k, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&m, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&n, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&alpha, 1, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&beta, 1, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
 
+  // tip koji predstavla red matrice A
   MPI_Type_vector(k, 1, m, MPI_FLOAT, &Arow);
   MPI_Type_commit(&Arow);
 
+  // tip koji predstavlja kolonu matice B
   MPI_Type_vector(k, 1, n, MPI_FLOAT, &Bcol);
   //  MPI_Type_contiguous(k, MPI_FLOAT, &Bcol);
   MPI_Type_commit(&Bcol);
 
+  // tip koji predstavlja red matrice C
   MPI_Type_vector(n, 1, m, MPI_FLOAT, &Crow);
   MPI_Type_commit(&Crow);
 
   if (rank != MASTER)
   {
+    // Slave procesi alociraju prostor za matricu B
     B = new float[n * k];
   }
-
+  // svim procesima treba cela matrica B
   MPI_Bcast(B, n * k, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
 
   if (rank == MASTER)
   {
-    int count = m; // broj elementa izlazne matrice
-    int sendCount = 0;
-    int receiveCount = 0;
+    int count = m; // broj redova matice C
+    int sendCount = 0; // broj poslatih taskova
+    int receiveCount = 0; // broj primljenih rezultata
 
     for (sendCount = 0; sendCount < count && sendCount + 1 < size; sendCount++)
     {
-      // svakom procesu posalji zadataka
+      // svakom procesu posalji taks - izracunavanje jednog reda matrice C 
       //int row = sendCount / n;
       int row = sendCount;
       //int col = sendCount % n;
 
       MPI_Request request;
 
+      // salje se redni broj reda
       MPI_Send(&row, 1, MPI_INT, sendCount + 1, ROW_INDEX_TAG, MPI_COMM_WORLD);
       //MPI_Send(&col, 1, MPI_INT, sendCount + 1, COLUMN_INDEX_TAG, MPI_COMM_WORLD);
+      // salje se red matice A
       MPI_Isend(&A[row], 1, Arow, sendCount + 1, ROW_TAG, MPI_COMM_WORLD, &request);
       //MPI_Isend(&B[col], 1, Bcol, sendCount + 1, COLUMN_TAG, MPI_COMM_WORLD, &request);
       //printf("Proces %d sends Arow=%d to process %d\n", rank, row, sendCount + 1);
@@ -184,12 +193,15 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
     int row, col;
     float result;
     MPI_Status status;
+    // dok ne primis sve rezultate
     while (receiveCount < count)
     {
       // cekaj podatak od slavea
       //printf("MASTER CEKA\n");
+      // prima se redni broj reda rezultata
       MPI_Recv(&row, 1, MPI_INT, MPI_ANY_SOURCE, ROW_INDEX_TAG, MPI_COMM_WORLD, &status);
      // MPI_Recv(&col, 1, MPI_INT, status.MPI_SOURCE, COLUMN_INDEX_TAG, MPI_COMM_WORLD, 0);
+     // prime sa red matice C
       MPI_Recv(&C[row], 1, Crow, status.MPI_SOURCE, RESULT_TAG, MPI_COMM_WORLD, 0);
       /*printf("MASTER prmio C(%d,%d)=%f\n", row, col, result);
 
@@ -201,7 +213,7 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
 */
       //C[col * m + row] = result;
       receiveCount++;
-
+      // ako ima jos taskova da se salju, posalji task procesu od koga si primio rezultat
       if (sendCount < count)
       {
         //int row = sendCount / n;
@@ -209,11 +221,12 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
         //int col = sendCount % n;
 
         MPI_Request request;
-
+        // salje se redni broj reda
         MPI_Send(&row, 1, MPI_INT, status.MPI_SOURCE, ROW_INDEX_TAG, MPI_COMM_WORLD);
         //printf("Proces %d sends Arow=%d to process %d\n", rank, row, status.MPI_SOURCE);
         //MPI_Send(&col, 1, MPI_INT, status.MPI_SOURCE, COLUMN_INDEX_TAG, MPI_COMM_WORLD);
         //printf("Proces %d sends Dcol=%d to process %d\n", rank, col, status.MPI_SOURCE);
+        // salje se red matrice A
         MPI_Isend(&A[row], 1, Arow, status.MPI_SOURCE, ROW_TAG, MPI_COMM_WORLD, &request);
         //MPI_Isend(&B[col], 1, Bcol, status.MPI_SOURCE, COLUMN_TAG, MPI_COMM_WORLD, &request);
         // printf("MASTER sends (%d, %d) to process%d\n", row, col, status.MPI_SOURCE);
@@ -238,30 +251,32 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
     bool needed = true;
     MPI_Status status;
 
-    // alocirati prostor
-    Abuff = new float[k]; // vrsta
+    // alocirati prostor za bafere
+    Abuff = new float[k]; // red matrice A
     //Bbuff = new float[k]; // kolona
     Bbuff = B; // matrica B
-    Cbuff = new float[n];
+    Cbuff = new float[n]; // red matice C
 /*
     printf("SLAVE%d B:", rank);
     for (int i = 0; i < n * k; i++)
       printf("%f ", B[i]);
     printf("\n");
 */
+    // dok ima posla
     while (needed)
     {
-      // cekaj poruku od mastera
       //printf("Slave %d ceka\n", rank);
+      // cekaj poruku od mastera
       MPI_Recv(&row, 1, MPI_INT, MASTER, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
       if (status.MPI_TAG == END_TAG)
       {
        // printf("Primljen END\n");
+       // nema vise posla
         needed = false;
         continue;
       }
       //MPI_Recv(&col, 1, MPI_INT, MASTER, COLUMN_INDEX_TAG, MPI_COMM_WORLD, 0);
-
+      // prima se red matice A
       MPI_Recv(Abuff, k, MPI_FLOAT, MASTER, ROW_TAG, MPI_COMM_WORLD, 0);
       //printf("SLAVE%d Primljen Abuff(%d)", rank, row);
       //for (int i = 0; i < k; printf("%F ", Abuff[i++]))
@@ -275,7 +290,7 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
         ;
       printf("\n");
 */
-      // else radi posao
+      // izracunavanje
       for (int i = 0; i < n; i++)
         Cbuff[i] = 0;
       for (int j = 0; j < n; j++)
@@ -293,22 +308,24 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
         // zbir na kraju pomnoziti sa alfa i beta
         Cbuff[j] = Cbuff[j] * beta + alpha * c;
       }
-      // posalji rezultat
       //printf("SLAVE%d Cbuff:", rank);
      // for (int i = 0; i < n; i++)
         //printf("%f ", Cbuff[i]);
+
+      // posalji rezultat -- prvo redni broj reda pa sam red matice C
       MPI_Send(&row, 1, MPI_INT, MASTER, ROW_INDEX_TAG, MPI_COMM_WORLD);
      // MPI_Send(&col, 1, MPI_INT, MASTER, COLUMN_INDEX_TAG, MPI_COMM_WORLD);
       MPI_Send(Cbuff, n, MPI_FLOAT, MASTER, RESULT_TAG, MPI_COMM_WORLD);
 
       //printf("SLAVE%d salje C(%d, %d)=%f\n", rank, row, col, Cbuff);
     }
-
+    // slave dealocira svoje bafere
     delete Abuff;
     delete Bbuff;
     delete Cbuff;
   }
 
+  // dealociranje tipova podataka
   MPI_Type_free(&Arow);
   MPI_Type_free(&Bcol);
   MPI_Type_free(&Crow);
@@ -326,6 +343,7 @@ int main(int argc, char *argv[])
 
   if (size == 1)
   {
+    // mora postojati barem jedan slave proces
     printf("Inadequate number of processes\n");
     MPI_Abort(MPI_COMM_WORLD, -10);
   }
@@ -364,7 +382,7 @@ int main(int argc, char *argv[])
     //printf("Finished seq!\n");
     timeSeq = MPI_Wtime() - timeSeq;
 
-    // parallel
+    // parallel sgemm interface
     timePar = MPI_Wtime();
     basicSgemm_par(rank, size, 'N', 'T', matArow, matBcol, matAcol, 1.0f, &matA.front(), matArow, &matBT.front(), matBcol, 0.0f, &matD.front(), matArow);
     //printf("Finished par!\n");
@@ -394,6 +412,7 @@ int main(int argc, char *argv[])
   }
   else
   {
+    // i master i svi slave-ovi pozivaju ovu funkciju
     basicSgemm_par(rank, size, 'N', 'T', 0, 0, 0, 1.0f, 0, 0, 0, 0, 0.0f, 0, 0);
   }
 
