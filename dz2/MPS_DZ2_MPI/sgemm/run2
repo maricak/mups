@@ -10,6 +10,6 @@ mpirun -np 2 ./dz2z2 data/medium/input/matrix1.txt data/medium/input/matrix2t.tx
 #mpirun -np 1 ./dz2z2 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
 #mpirun -np 1 ./dz2z2 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
 
-mpirun -np 3 ./dz2z2 data/mala1.txt data/mala2.txt result_mala_par.txt
+#mpirun -np 3 ./dz2z2 data/mala1.txt data/mala2.txt result_mala_par.txt
 
-mpirun -np 6 ./dz2z2 data/srednja1.txt data/srednja2.txt result_srednja_par.txt
+#mpirun -np 6 ./dz2z2 data/srednja1.txt data/srednja2.txt result_srednja_par.txt
