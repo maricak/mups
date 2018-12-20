@@ -38,16 +38,18 @@ double *jacobi_seq(int m, int n)
   printf("  IT     l2(dX)    l2(resid)\n");
   printf("\n");
 
-  b[n - 1] = (double)(n + 1);
-
   /*
     Initialize the solution estimate to 0.
     Exact solution is (1,2,3,...,N).
   */
   for (i = 0; i < n; i++)
   {
+    b[i] = 0.0;
     x[i] = 0.0;
   }
+  b[n - 1] = (double)(n + 1);
+
+  b[n - 1] = (double)(n + 1);
 
   /* Iterate M times. */
   for (it = 0; it < m; it++)
@@ -196,12 +198,7 @@ void parallelJacobiUpdateAndDifference(double *xnew_buffer, const double *x_buff
   d_local = d_local + pow(x_buffer[chunk - 1] - xnew_buffer[chunk - 1], 2);
 }
 
-void parallelResidual(const double *xnew_buffer, double &r_local, int chunk, int n, int rank)
-{
-
-  double t;
-  double b;
-
+void parallelResidual(const double *xnew_buffer, double &r_local, int chunk, int n, int rank ) {
   MPI_Request firstSendReq, lastSendReq;
   MPI_Status firstSendStatus, lastSendStatus;
   MPI_Request prevRecvReq, nextRecvReq;
@@ -210,97 +207,74 @@ void parallelResidual(const double *xnew_buffer, double &r_local, int chunk, int
   int receivedNext = 0;
   int skippedFirst = 0;
   int skippedLast = 0;
-  int xPrev, xNext;
+  double xPrev, xNext;
 
-  b = 0;
+  double t;
+  double b = 0.0;
 
+// b = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 16
   if (rank == 0)
   {
-    t = b - 2.0 * xnew_buffer[0];
-    t = t + xnew_buffer[1];
-    r_local = r_local + t * t;
+    MPI_Isend(&xnew_buffer[chunk - 1], 1, MPI_DOUBLE, rank + 1, TAG_INCOMING_FROM_LEFT, MPI_COMM_WORLD, &lastSendReq);
+    MPI_Irecv(&xNext, 1, MPI_DOUBLE, rank + 1, TAG_INCOMING_FROM_RIGHT, MPI_COMM_WORLD, &nextRecvReq); // attempt receiving the first element from the right-rank process
+    xPrev = 0;
     receivedPrev = 1;
+  }
+  else if (rank == N - 1)
+  {
+    MPI_Isend(&xnew_buffer[0], 1, MPI_DOUBLE, rank - 1, TAG_INCOMING_FROM_RIGHT, MPI_COMM_WORLD, &firstSendReq);
+    MPI_Irecv(&xPrev, 1, MPI_DOUBLE, rank - 1, TAG_INCOMING_FROM_LEFT, MPI_COMM_WORLD, &prevRecvReq);
+    xNext = 0;
+    receivedNext = 1;
   }
   else
   {
-    MPI_Isend(&xnew_buffer[0], 1, MPI_DOUBLE, rank - 1, TAG_INCOMING_FROM_RIGHT, MPI_COMM_WORLD, &firstSendReq); // send your first element to the left-rank process
-    MPI_Irecv(&xPrev, 1, MPI_DOUBLE, rank - 1, TAG_INCOMING_FROM_LEFT, MPI_COMM_WORLD, &prevRecvReq);            // attempt receiving the last element from the left-rank process
-    MPI_Test(&prevRecvReq, &receivedPrev, &prevRecvStatus);
+    MPI_Isend(&xnew_buffer[0], 1, MPI_DOUBLE, rank - 1, TAG_INCOMING_FROM_RIGHT, MPI_COMM_WORLD, &firstSendReq);
+    MPI_Isend(&xnew_buffer[chunk - 1], 1, MPI_DOUBLE, rank + 1, TAG_INCOMING_FROM_LEFT, MPI_COMM_WORLD, &lastSendReq);
 
-    if (receivedPrev)
-    {
-      t = b - 2.0 * xnew_buffer[0];
-      t = t + xPrev;
-      t = t + xnew_buffer[1];
-      r_local = r_local + t * t;
-    }
+    MPI_Irecv(&xPrev, 1, MPI_DOUBLE, rank - 1, TAG_INCOMING_FROM_LEFT, MPI_COMM_WORLD, &prevRecvReq);
+    MPI_Irecv(&xNext, 1, MPI_DOUBLE, rank + 1, TAG_INCOMING_FROM_RIGHT, MPI_COMM_WORLD, &nextRecvReq);
   }
 
   for (int i = 1; i < chunk - 1; i++)
   {
-    t = b - 2.0 * xnew_buffer[i];
+    t = - 2.0 * xnew_buffer[i];
     t = t + xnew_buffer[i - 1];
     t = t + xnew_buffer[i + 1];
     r_local = r_local + t * t;
   }
 
-  // wait for i == 0
+  // Wait for first.
   if (!receivedPrev)
   {
     MPI_Wait(&prevRecvReq, &prevRecvStatus);
-    t = b - 2.0 * xnew_buffer[0];
-    t = t + xPrev;
-    t = t + xnew_buffer[1];
-    r_local = r_local + t * t;
   }
+  t = - 2.0 * xnew_buffer[0];
+  t = t + xPrev;
+  t = t + xnew_buffer[1];
+  r_local = r_local + t * t;
 
-  // for i == chunk - 1
 
-  if (rank == N - 1)
-    b = n + 1;
-  else
-    b = 0;
-
-  if (rank == N - 1)
-  {
-    t = b - 2.0 * xnew_buffer[chunk - 1];
-    t = t + xnew_buffer[chunk - 2];
-    r_local = r_local + t * t;
-    receivedNext = 1;
-  }
-  else
-  {
-    MPI_Isend(&xnew_buffer[chunk - 1], 1, MPI_DOUBLE, rank + 1, TAG_INCOMING_FROM_LEFT, MPI_COMM_WORLD, &lastSendReq); // send your last element to the right-rank process
-    MPI_Irecv(&xNext, 1, MPI_DOUBLE, rank + 1, TAG_INCOMING_FROM_RIGHT, MPI_COMM_WORLD, &nextRecvReq);                 // attempt receiving the first element from the right-rank process
-    MPI_Test(&nextRecvReq, &receivedNext, &nextRecvStatus);
-
-    if (receivedNext)
-    {
-      t = b - 2.0 * xnew_buffer[chunk - 1];
-      t = t + xNext;
-      t = t + xnew_buffer[chunk - 2];
-      r_local = r_local + t * t;
-    }
-  }
-
-  // wait for i == chunk - 1
+  // Wait for last.
   if (!receivedNext)
   {
-
     MPI_Wait(&nextRecvReq, &nextRecvStatus);
-    t = b - 2.0 * xnew_buffer[chunk - 1];
-    t = t + xNext;
-    t = t + xnew_buffer[chunk - 2];
-    r_local = r_local + t * t;
   }
+  if (rank == N - 1) 
+    t = n + 1 - 2.0 * xnew_buffer[chunk - 1];
+  else {
+    t = - 2.0 * xnew_buffer[chunk - 1];
+  }
+  t = t + xNext;
+  t = t + xnew_buffer[chunk - 2];
+  r_local = r_local + t * t;
 }
 
-void overwriteLocalArray(double *x_buffer, double *xnew_buffer, int chunk)
+void overwriteLocalArray(double ** x_buffer, double ** xnew_buffer)
 {
-  for (int i = 0; i < chunk; i++)
-  {
-    x_buffer[i] = xnew_buffer[i];
-  }
+  double* temp = *x_buffer;
+  *x_buffer = *xnew_buffer;
+  *xnew_buffer = temp;
 }
 
 int main(int argc, char *argv[])
@@ -317,7 +291,6 @@ int main(int argc, char *argv[])
   int m;
   int n;
   double *x;
-  double *xnew;
 
   double timeStart, timePar, timeSeq;
   double *xPar, *xSeq;
@@ -355,7 +328,6 @@ int main(int argc, char *argv[])
 
     // Prepare structures for parallel implementation
     x = (double *)malloc(n * sizeof(double));
-    xnew = (double *)malloc(n * sizeof(double));
 
     printf("\n");
     printf("JACOBI_MPI:\n");
@@ -369,20 +341,13 @@ int main(int argc, char *argv[])
     printf("  IT     l2(dX)    l2(resid)\n");
     printf("\n");
 
-    for (i = 0; i < n; i++)
-    {
-      x[i] = 0.0;
-    }
-    // b[n - 1] = (double)(n + 1);
   }
 
   // Everyone allocates buffers.
-  double *x_buffer = (double *)malloc(chunk * sizeof(double));
+  double *x_buffer = (double *)calloc(chunk, sizeof(double));
   double *xnew_buffer = (double *)malloc(chunk * sizeof(double));
   double d_local;
   double r_local;
-  // Everyone but master waits for master to finish seq implementation --
-  // this is so all threads start the parallel impl. at the same time
 
   //MPI_Barrier(MPI_COMM_WORLD);
   // Use parallel jacobi interface
@@ -399,7 +364,7 @@ int main(int argc, char *argv[])
   MPI_Status diffStatus, redStatus, gatherStatus;
 
   // Scatter initial array.
-  MPI_Scatter(x, chunk, MPI_DOUBLE, x_buffer, chunk, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
+  // MPI_Scatter(x, chunk, MPI_DOUBLE, x_buffer, chunk, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);
 
   for (it = 0; it < m; it++)
   {
@@ -414,7 +379,7 @@ int main(int argc, char *argv[])
     parallelResidual(xnew_buffer, r_local, chunk, n, rank);
 
     // Overwrite local X array.
-    overwriteLocalArray(x_buffer, xnew_buffer, chunk);
+    overwriteLocalArray(&x_buffer, &xnew_buffer);
 
     if (rank == MASTER)
     {
@@ -490,7 +455,6 @@ int main(int argc, char *argv[])
     std::cerr << (std::equal(vectorPar.begin(), vectorPar.end(), vectorSeq.begin(), comparator) ? "TEST PASSED" : "TEST FAILED") << std::endl;
     std::cerr << "***********************************************" << std::endl;
 
-    free(xnew);
     free(xSeq);
     free(xPar);
   }
