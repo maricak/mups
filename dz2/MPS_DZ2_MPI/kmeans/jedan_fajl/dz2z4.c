@@ -1227,35 +1227,72 @@ int cluster(int numObjects,     /* number of input objects */
 /*---< cluster_par() >-----------------------------------------------------------*/
 int cluster_par(int rank,
                 int size,
-                int numObjects,     /* number of input objects -- master */
-                int numAttributes,  /* size of attribute of each object -- master */
-                float **attributes, /* [numObjects][numAttributes] -- master */
-                int num_nclusters, // -- master
-                float threshold,         /* in:   -- master*/
+                int numObjects,     /* number of input objects -- all */
+                int numAttributes,  /* size of attribute of each object -- all */
+                float **attributes, /* [numObjects][numAttributes] -- all */
+                int num_nclusters, // -- all
+                float threshold,         /* in:   -- all*/
                 float ***cluster_centres /* out: [best_nclusters][numAttributes] */
 
 )
 {
+
+  
+  // membership - npoints 
+  // attributes (feature u kmeans_par) - retardirana matrica
+  // clusters - numAttributes * nclusters
+
+  // IMENA KOMENTAR
+
+  // main  --             cluster_par         --  kmeans_clustering
+  // numObjects           numObjects                 npoints
+  // numAttributes        numAttributes              nfeatures
+  // attributes           attributes                 feature
+  // nclusters            num_nclusters              nclusters
+  // threshold            threshold                  threshold
+  // &cluster_centres_par cluster_centres
+
+	
+
   int nclusters;
+
+  int chunkClusters =  num_nclusters / size;
+  int chunkPoints = numObjects / size;
+
   int *membership;
   float **tmp_cluster_centres;
 
+  float **result_cluster_centres;
+
   if (rank == MASTER) {
-	  
-	membership = (int *)malloc(numObjects * sizeof(int));
-	nclusters = num_nclusters;
-	srand(7);
+    // Allocate result matrix.
+    result_cluster_centres    = (float**) malloc(num_nclusters *             sizeof(float*));
+    result_cluster_centres[0] = (float*)  malloc(num_nclusters * numAttributes * sizeof(float));
+    for (i=1; i<num_nclusters; i++)
+        result_cluster_centres[i] = result_cluster_centres[i-1] + numAttributes;
+
+    srand(7);
   }
+
+  nclusters = num_nclusters;
+
+  // 1) Everyone has their own membership array size = chunk.
+  membership = (int *) malloc (chunkPoints * sizeof(int));
   
   // samo master ima niz attributes -- unutra se radi raspodela posla
   tmp_cluster_centres = kmeans_clustering_par(rank, // all
                                               size, // all 
-                                              attributes, // master 
-                                              numAttributes, // master
-                                              numObjects, // master
-                                              nclusters, // master
-                                              threshold, // master
-                                              membership); // master
+                                              attributes, // all 
+                                              numAttributes, // all
+                                              numObjects, // all
+                                              nclusters, // all
+                                              threshold, // all
+                                              membership); // all
+
+
+  // gather
+
+  MPI_Gather(tmp_cluster_centres[0], chunkClusters * numAttributes, MPI_FLOAT, result_cluster_centres[0], chunkClusters * numAttributes, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
 
   if (rank == MASTER)
   {
@@ -1264,7 +1301,7 @@ int cluster_par(int rank,
       free((*cluster_centres)[0]);
       free(*cluster_centres);
     }
-    *cluster_centres = tmp_cluster_centres;
+    *cluster_centres = result_cluster_centres;
 
     free(membership);
   }
@@ -1396,14 +1433,13 @@ float **kmeans_clustering(float **feature, /* in: [npoints][nfeatures] */
 /*----< kmeans_clustering_par() >------------------------------------------*/
 float **kmeans_clustering_par(int rank, // all
                               int size, // all
-                              float **feature, /* in: [npoints][nfeatures] -- master */
-                              int nfeatures, // master
-                              int npoints, // master
-                              int nclusters, // master
-                              float threshold, // master
-                              int *membership) /* out: [npoints] -- master */
+                              float **feature, /* in: [npoints][nfeatures] -- all */
+                              int nfeatures, // all - velicina reda 
+                              int npoints, // all - npoints
+                              int nclusters, // all - nclusters
+                              float threshold, // all
+                              int *membership) /* out: [npoints] -- all */
 {
-  // features - niz atributes koji je ucitao samo master
 
   int i, j, k, n = 0, index, loop = 0;
   int *new_centers_len; /* [nclusters]: no. of points in each cluster */
@@ -1412,105 +1448,56 @@ float **kmeans_clustering_par(int rank, // all
   float **new_centers; /* [nclusters][nfeatures] */
 
   // Helper variables.
-  float ***local_new_centers;
-  int **local_new_centers_len;
-  
-  int chunk;
+  float **local_new_centers;
+  int *local_new_centers_len;
 
-  //if (rank == MASTER)
-  //{
+  int chunkClusters =  nclusters / size;
+  int chunkPoints = npoints / size;
 
-  // bcast nclusters, nfeatures, and npoints
-  MPI_Bcast(&nclusters, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
-  MPI_Bcast(&nfeatures, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
-  MPI_Bcast(&npoints, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
-  
-  // bcast nfeatures -- ne mora bcast ako svi naprave ovu strukturu na pocetku. Sta je bolje? da MASTER napravi pa da salje svima ili da svi naprave
-  // mislim da je bojlje da svi naprave -- i ja mislim da je bolje da svi naprave
-
-  // SVI ALOCORAJU SVOJU STRUKTURU
   /* allocate space for returning variable clusters[] */
-  clusters = (float **)malloc(nclusters * sizeof(float *));
-  clusters[0] = (float *)malloc(nclusters * nfeatures * sizeof(float));
-  for (i = 1; i < nclusters; i++)
+  clusters = (float **)malloc(chunkClusters * sizeof(float *));
+  clusters[0] = (float *)malloc(chunkClusters * nfeatures * sizeof(float));
+  for (i = 1; i < chunkClusters; i++)
     clusters[i] = clusters[i - 1] + nfeatures;
 
-  // MASTER JE POUNI RANDOM VREDNOSTIMA I KORISTECI FEATURE KOJI SAMO ON IMA
-  if (rank == MASTER)
+  /* randomly pick cluster centers */
+  for (i = 0; i < chunkClusters; i++)
   {
-    /* randomly pick cluster centers */
-    for (i = 0; i < nclusters; i++)
-    {
-      //n = (int)rand() % npoints;
-      for (j = 0; j < nfeatures; j++)
-        clusters[i][j] = feature[n][j];
-      n++;
-    }
-
-    for (i = 0; i < npoints; i++)
-      membership[i] = -1;
+    //n = (int)rand() % npoints;
+    for (j = 0; j < nfeatures; j++)
+      clusters[i][j] = feature[chunkClusters * rank + n][j];
+    n++;
   }
 
-  // BCAST - SVI IMAJU PODATKE IZ CLUSTER
-  MPI_Bcast(cluster[0], nclusters * nfeatures, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-
+  for (i = 0; i < chunkPoints; i++)
+    membership[i] = -1;
 
   /* need to initialize new_centers_len and new_centers[0] to all 0 */
-  new_centers_len = (int *)calloc(nclusters, sizeof(int));
+  //if (rank == MASTER) {
+    new_centers_len = (int *)calloc(chunkClusters, sizeof(int));
 
-  new_centers = (float **)malloc(nclusters * sizeof(float *));
-  new_centers[0] = (float *)calloc(nclusters * nfeatures, sizeof(float));
-  for (i = 1; i < nclusters; i++)
-    new_centers[i] = new_centers[i - 1] + nfeatures;
-  // }
-
-  // SVAKI PROCES IMA LOKALNE BAFERE / SMANJITI TRENUTNU IMPLEME
-  // ...
-  
-  // features je nesto sto samo master ima -> mora scater
-  // scater features -- svaki proces obradjuje chunk points -- treba da dobije chunk features
-  MPI_Scatter(
-  // CHUNK JE NPOINTS / SIZE, U MAINU JE PROVERENO DA LI JE OVO DELJIVO BEZ OSTATKA
-
-  chunk = npoints /
-  // OVDE NAPRAVITI STRUKTURU ATRIBUTES KOJA IMA CHUNK REDOVA. ISTO JA MATRICA KOJA IMA PODATKE SAMO U PRVOM REDU, RADI SE ZA SLAVEOVE
-
-  // OVDE URADITI SCATER SAMO TOG PRVOG REDA
-
-  // OVDE KREIRATI NIZ MEMBERSHIO YA SLAVEOVE KOJI IMA CHUNK ELEMENATA
-
-  // OVE NAPRAVITI MEMBERSHIP SCATER
+    new_centers = (float **)malloc(chunkClusters * sizeof(float *));
+    new_centers[0] = (float *)calloc(chunkClusters * nfeatures, sizeof(float));
+    for (i = 1; i < chunkClusters; i++)
+      new_centers[i] = new_centers[i - 1] + nfeatures;
+  //}
 
   do
   {
 
     localDelta = 0.0;
 
-  // Allocate local thread array and matrix
-  local_new_centers_len = (int **)malloc(N * sizeof(int *));
-  for (i = 0; i < N; i++)
-  {
-	local_new_centers_len[i] = (int *)calloc(nclusters, sizeof(int));
-  }
+    // Allocate local thread array and matrix
+    local_new_centers_len = (int *)calloc(nclusters, sizeof(int));
 
-  local_new_centers = (float ***)malloc(N * sizeof(float **));
-  for (i = 0; i < N; i++)
-  {
-	local_new_centers[i] = (float **)malloc(nclusters * sizeof(float *));
-	local_new_centers[i][0] = (float *)calloc(nclusters * nfeatures, sizeof(float));
-	for (k = 0; k < nclusters; k++)
-	  local_new_centers[i][k] = local_new_centers[i][0] + k * nfeatures;
-  }
-  
-#pragma omp parallel for default(none) private(i, j, index)                                                        \
-    shared(npoints, feature, nfeatures, clusters, nclusters, membership, local_new_centers_len, local_new_centers) \
-        reduction(+                                                                                                \
-                  : delta)
-    // SVAKI PROCES IDE DO CHUNK
-    for (i = 0; i < npoints; i++)
-    {
+    local_new_centers = (float **)malloc(nclusters * sizeof(float *));
+    local_new_centers[0] = (float *)calloc(nclusters * nfeatures, sizeof(float));
+    for (i = 1; i < nclusters; i++)
+      local_new_centers[i] = local_new_centers[i - 1] + nfeatures;
+
+    for (i = 0; i < chunkPoints; i++) {
       /* find the index of nestest cluster centers */
-      index = find_nearest_point(feature[i], nfeatures, clusters, nclusters);
+      index = find_nearest_point(feature[rank * chunkPoints + i], nfeatures, clusters, nclusters);
       /* if membership changes, increase delta by 1 */
       if (membership[i] != index)
         localDelta += 1.0;
@@ -1520,36 +1507,17 @@ float **kmeans_clustering_par(int rank, // all
 
       /* update new cluster centers : sum of objects located within */
 
-      local_new_centers_len[omp_get_thread_num()][index]++;
+      local_new_centers_len[index]++;
       for (j = 0; j < nfeatures; j++)
-        local_new_centers[omp_get_thread_num()][index][j] += feature[i][j];
+        local_new_centers[index][j] += feature[rank * chunkPoints + i][j];
     }
 
-    // Perform reduction of local_new_centers_len and local_new_centers manually.
-    // mpi_reduction - for petlja sa reduction za svaki j = 0 do nclusters
-    // ili reduce all
-    for (i = 0; i < N; i++)
-    {
-      for (j = 0; j < nclusters; j++)
-      {
-        new_centers_len[j] += local_new_centers_len[i][j];
-      }
-    }
-    for (i = 0; i < N; i++)
-    {
-      for (j = 0; j < nclusters; j++)
-      {
-        for (k = 0; k < nfeatures; k++)
-        {
-          new_centers[j][k] += local_new_centers[i][j][k];
-        }
-      }
-    }
+    // Master gets reduced version, then scatters it to everyone.
+    MPI_Reduce_scatter(local_new_centers_len, new_centers_len, chunkClusters, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Reduce_scatter(local_new_centers[0], new_centers[0], chunkClusters, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
 
     /* replace old cluster centers with new_centers */
-#pragma omp parallel for default(none) private(i, j) \
-    shared(nfeatures, nclusters, new_centers_len, new_centers, clusters)
-    for (i = 0; i < nclusters; i++)
+    for (i = 0; i < chunkClusters; i++)
     {
       for (j = 0; j < nfeatures; j++)
       {
@@ -1559,27 +1527,12 @@ float **kmeans_clustering_par(int rank, // all
       }
       new_centers_len[i] = 0; /* set back to 0 */
     }
-
-    // gather strukture clusters
-
-    // Deallocate local thread array and matrix.
-    // NE TREBA deallocate posto se allocate radi van for petlje vec mozda samo reset? 
-	// mozda prvo da probamo ovako sa alokacijom da vidimo da radi pa cemo posle probati reset
-    for (i = 0; i < N; i++)
-    {
-      free(local_new_centers_len[i]);
-    }
+    
     free(local_new_centers_len);
-
-    for (i = 0; i < N; i++)
-    {
-      free(local_new_centers[i][0]);
-    }
+    free(local_new_centers[0]);
     free(local_new_centers);
 
-    //localDelta /= npoints;
-    // REDUCTIOM DELTA !!!!
-	MPI_Allreduce(&localDelta, &delta, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	  MPI_Allreduce(&localDelta, &delta, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   } while (delta > threshold);
 
   free(new_centers[0]);
@@ -1620,7 +1573,7 @@ int main(int argc, char **argv)
   int numObjects; // master has to scatter
   char line[1024]; 
   int isBinaryFile = 0;
-  int nloops;
+  int nloops = 1;
   float threshold = 0.001;
   double timing;
 
@@ -1733,13 +1686,12 @@ int main(int argc, char **argv)
       }
       fclose(infile);
     }
-    nloops = 1;
     printf("I/O completed\n");
 
     // samo master ima niz attributes
     memcpy(attributes[0], buf, numObjects * numAttributes * sizeof(float));
 
-    if (numObjects % size)
+    if (numObjects % size || nclusters % size)
     {
       printf("Inadequate number of processes\n");
       MPI_Abort(MPI_COMM_WORLD, -10);
@@ -1784,6 +1736,24 @@ int main(int argc, char **argv)
     timing = MPI_Wtime();
   } // MASTER end
 
+  MPI_Bcast(&numObjects, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+  MPI_Bcast(&numAttributes, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+  MPI_Bcast(&nclusters, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+  MPI_Bcast(&threshold, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+
+  if (rank != MASTER){
+    // Create space for attributes.
+    attributes = (float **)malloc(numObjects * sizeof(float *));
+    attributes[0] = (float *)malloc(numObjects * numAttributes * sizeof(float));
+    for (i = 1; i < numObjects; i++)
+      attributes[i] = attributes[i - 1] + numAttributes;
+  }
+
+  
+  // Broadcast attributes.
+  MPI_Bcast(attributes[0], numObject * numAttributes, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
+ 
+  
   // all processes call cluster_par
   for (i = 0; i < nloops; i++)
   {
@@ -1791,11 +1761,11 @@ int main(int argc, char **argv)
     cluster_centres_par = NULL;
     cluster_par(rank,
                 size,
-                numObjects, // scattered by master
-                numAttributes, // scattered by master
+                numObjects, // all
+                numAttributes, // all
                 attributes, /* [numObjects][numAttributes] */
-                nclusters, // scattered by master
-                threshold, // scattered by master
+                nclusters, // all
+                threshold, // all
                 &cluster_centres_par);
   }
 
