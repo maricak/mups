@@ -212,7 +212,7 @@ void parallelResidual(const double *xnew_buffer, double &r_local, int chunk, int
   double t;
   double b = 0.0;
 
-// b = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 16
+  // b = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 16
   if (rank == 0)
   {
     MPI_Isend(&xnew_buffer[chunk - 1], 1, MPI_DOUBLE, rank + 1, TAG_INCOMING_FROM_LEFT, MPI_COMM_WORLD, &lastSendReq);
@@ -375,7 +375,6 @@ int main(int argc, char *argv[])
     parallelJacobiUpdateAndDifference(xnew_buffer, x_buffer, d_local, chunk, n, rank);
     // Residual.
     r_local = 0;
-
     parallelResidual(xnew_buffer, r_local, chunk, n, rank);
 
     // Overwrite local X array.
@@ -409,13 +408,14 @@ int main(int argc, char *argv[])
     }
   }
 
+
   // When the process is finished, gather results to master.
-  MPI_Igather(x_buffer, chunk, MPI_DOUBLE, x, chunk, MPI_DOUBLE, MASTER, MPI_COMM_WORLD, &gatherRequest);
+  MPI_Gather(x_buffer, chunk, MPI_DOUBLE, x, chunk, MPI_DOUBLE, MASTER, MPI_COMM_WORLD);//, &gatherRequest);
 
   if (rank == MASTER)
   {
     // Wait for all results to be gathered.
-    MPI_Wait(&gatherRequest, &gatherStatus);
+   // MPI_Wait(&gatherRequest, &gatherStatus);
     /* Write part of final estimate. */
     printf("\n");
     printf("  Part of final solution estimate:\n");
@@ -434,6 +434,11 @@ int main(int argc, char *argv[])
 
     xPar = x;
 
+    /*printf("chunk=%d\n", chunk);
+    std::cerr << "P1(57)" << xPar[1*chunk + 57] << std::endl;
+    std::cerr << "P2(57)" << xPar[2*chunk + 57] << std::endl;
+    std::cerr << "P3(57)" << xPar[3*chunk + 57] << std::endl;
+*/
     std::function<bool(double, double)> comparator = [](double left, double right) {
       // Lambda function to compare 2 doubles with ACCURACY
       return fabs(left - right) < ACCURACY;

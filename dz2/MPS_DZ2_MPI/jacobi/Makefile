@@ -1,9 +1,9 @@
 # C compiler
-CC = gcc
-CC_FLAGS = -fopenmp -O2
+CC = mpic++
+CC_FLAGS = -lm -std=c++11
 
 prime: 
-	$(CC) $(CC_FLAGS) jacobi.c -o jacobi -lm 
+	$(CC) $(CC_FLAGS) jacobi_fast.cpp -o jacobi 
 
 clean:
 	rm -f jacobi
