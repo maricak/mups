@@ -3,11 +3,9 @@
 C = mpicc
 CC_FLAGS = -lm 
 
-prime: $(C) $(CC_FLAGS) dz1z5.o -o dz1z5
+prime: 
+	$(C) $(CC_FLAGS) dz2z4.c dz2z4.h -o dz2z4
 
-
-dz1z5.o: dz1z5.c dz1z5.h
-	$(C) $(CC_FLAGS) dz1z5.c -c
 
 clean:
-	rm -f sgemm dz1z1 dz1z2 dz1z3 dz1z4 dz1z5 result*
+	rm -f dz2z4 result*

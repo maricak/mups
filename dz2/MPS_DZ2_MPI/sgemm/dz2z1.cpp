@@ -61,7 +61,7 @@ bool writeColMajorMatrixFile(const char *fn, int nr_row, int nr_col, std::vector
   return true;
 }
 
-// sequential iterface for basicSgemm
+// sequential interface for basicSgemm
 void basicSgemm(char transa, char transb, int m, int n, int k, float alpha, const float *A, int lda, const float *B, int ldb, float beta, float *C, int ldc)
 {
   if ((transa != 'N') && (transa != 'n'))
@@ -160,13 +160,7 @@ void basicSgemm_par(char transa, char transb, int m, int n, int k, float alpha, 
 
   // matricaA - chunk redova
   MPI_Scatter(A, 1, chunk_row_matA, Abuff, chunk * k, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-  /* resenje bez tipa chunk_row_matA
-    for (int i = 0; i < k; i++)
-    {
-      MPI_Scatter(&A[i * m], chunk, MPI_FLOAT, &Abuff[i * chunk], chunk, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-    }
-  */
-
+ 
   // matricaB - cela
   MPI_Bcast(B, k * n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   Bbuff = B;

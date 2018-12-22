@@ -107,10 +107,8 @@ void basicSgemm(char transa, char transb, int m, int n, int k, float alpha, cons
 
 void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, int k, float alpha, float *A, int lda, float *B, int ldb, float beta, float *C, int ldc)
 {
-  int chunk;
 
   if (rank == MASTER)
-
   {
     if ((transa != 'N') && (transa != 'n'))
     {
@@ -226,7 +224,7 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
     Abuff = new float[k]; // red matrice A
     Bbuff = B;            // matrica B
     Cbuff = new float[n]; // red matice C
-  
+
     // dok ima posla
     while (needed)
     {
@@ -259,7 +257,6 @@ void basicSgemm_par(int rank, int size, char transa, char transb, int m, int n, 
       // posalji rezultat -- prvo redni broj reda pa sam red matice C
       MPI_Send(&row, 1, MPI_INT, MASTER, ROW_INDEX_TAG, MPI_COMM_WORLD);
       MPI_Send(Cbuff, n, MPI_FLOAT, MASTER, RESULT_TAG, MPI_COMM_WORLD);
-
     }
     // slave dealocira svoje bafere
     delete Abuff;
@@ -343,7 +340,7 @@ int main(int argc, char *argv[])
   }
   else
   {
-    // i master i svi slave-ovi pozivaju ovu funkciju
+    // i slave-ovi pozivaju ovu funkciju
     basicSgemm_par(rank, size, 'N', 'T', 0, 0, 0, 1.0f, 0, 0, 0, 0, 0.0f, 0, 0);
   }
 

@@ -3,7 +3,7 @@ CC = mpic++
 CC_FLAGS = -lm -std=c++11
 
 prime: 
-	$(CC) $(CC_FLAGS) jacobi_fast.cpp -o jacobi 
+	$(CC) $(CC_FLAGS) dz2z3.cpp -o dz2z3 
 
 clean:
-	rm -f jacobi
+	rm -f dz2z3

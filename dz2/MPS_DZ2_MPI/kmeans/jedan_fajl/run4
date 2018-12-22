@@ -1,0 +1,7 @@
+
+#mpirun -np 4 ./dz2z4 -i data/100
+#mpirun -np 4 ./dz2z4 -i data/kdd_cup
+#mpirun -np 4 ./dz2z4 -i data/204800.txt | tee "izlaz.txt"
+#mpirun -np 4 ./dz2z4 -i data/819200.txt
+
+mpirun -np 4 ./dz2z4 -i data/mali.txt | tee "izlaz.txt"

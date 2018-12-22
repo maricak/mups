@@ -1141,11 +1141,11 @@ extern int _getopt_internal();
 
 /* cluster.c */
 int cluster(int, int, float **, int, float, float ***);
-int cluster_par(int, int, float **, int, float, float ***);
+int cluster_par(int, int,int, int, float **, int, float, float ***);
 
 /* kmeans_clustering.c */
 float **kmeans_clustering(float **, int, int, int, float, int *);
-float **kmeans_clustering_par(float **, int, int, int, float, int *);
+float **kmeans_clustering_par(int, int,float **, int, int, int, float, int *);
 float euclid_dist_2(float *, float *, int);
 int find_nearest_point(float *, int, float **, int);
 
