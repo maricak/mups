@@ -1,0 +1,7 @@
+
+mpirun -np 1 ./dz2z3 5000 500
+mpirun -np 1 ./dz2z3 10000 1000
+mpirun -np 1 ./dz2z3 50000 5000
+mpirun -np 1 ./dz2z3 100000 10000
+
+
