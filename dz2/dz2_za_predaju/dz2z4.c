@@ -1471,7 +1471,7 @@ float **kmeans_clustering_par(int rank,        // all
   }
 
   MPI_Scatter(clusters[0], chunkClusters * nfeatures, MPI_FLOAT, local_clusters[0], chunkClusters * nfeatures, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-  
+
   for (i = 0; i < chunkPoints; i++)
     membership[i] = -1;
 
@@ -1485,7 +1485,6 @@ float **kmeans_clustering_par(int rank,        // all
 
   do
   {
-
     MPI_Bcast(clusters[0], nclusters * nfeatures, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
 
     localDelta = 0.0;
@@ -1522,13 +1521,13 @@ float **kmeans_clustering_par(int rank,        // all
     for (i = 0; i < size; i++)
       counts[i] = chunkClusters;
 
-                      // ncluster             chunkClusters
-    MPI_Reduce_scatter(local_new_centers_len, new_centers_len, counts, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    // ncluster             chunkClusters
+    MPI_Reduce_scatter(local_new_centers_len, new_centers_len, counts, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     for (i = 0; i < size; i++)
       counts[i] = chunkClusters * nfeatures;
 
-                      // ncluster * nfeatures   chunkClustrs * nFeatures
+    // ncluster * nfeatures   chunkClustrs * nFeatures
     MPI_Reduce_scatter(local_new_centers[0], new_centers[0], counts, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
 
     /* replace old cluster centers with new_centers */
@@ -1817,10 +1816,12 @@ int main(int argc, char **argv)
         if (!(fabs(cluster_centres_par[i][j] - cluster_centres_seq[i][j]) < ACCURACY))
         {
           different = 1;
-          //break;
-          printf("ERR: (%d,%d) %15f %15f\n", i, j, cluster_centres_par[i][j], cluster_centres_seq[i][j]);
+          break;
+          //printf("ERR: (%d,%d) %15f %15f\n", i, j, cluster_centres_par[i][j], cluster_centres_seq[i][j]);
         }
       }
+      if (different == 1)
+        break;
     }
 
     printf(different ? "TEST FAILED\n" : "TEST PASSED\n");

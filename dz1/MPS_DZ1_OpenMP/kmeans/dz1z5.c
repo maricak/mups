@@ -1526,7 +1526,7 @@ int main(int argc, char **argv)
   int opt;
   extern char *optarg;
   extern int optind;
-  int nclusters = 5;
+  int nclusters = 8;
   char *filename = 0;
   float *buf;
   float **attributes;
@@ -1666,17 +1666,17 @@ int main(int argc, char **argv)
   printf("===================================SEQ=======================================\n\n");
   printf("number of Clusters %d\n", nclusters);
   printf("number of Attributes %d\n\n", numAttributes);
-  printf("Cluster Centers Output\n");
-  printf("The first number is cluster number and the following data is arribute value\n");
+ // printf("Cluster Centers Output\n");
+ // printf("The first number is cluster number and the following data is arribute value\n");
   printf("=============================================================================\n\n");
 
-  for (i = 0; i < nclusters; i++)
+  /*for (i = 0; i < nclusters; i++)
   {
     printf("%d: ", i);
     for (j = 0; j < numAttributes; j++)
       printf("%f ", cluster_centres_seq[i][j]);
     printf("\n\n");
-  }
+  }*/
   printf("Time for process: %f\n", timing);
 
   /*-----------------------------par-----------------------------*/
@@ -1701,17 +1701,17 @@ int main(int argc, char **argv)
   printf("number of threads: %d\n", N);
   printf("number of Clusters %d\n", nclusters);
   printf("number of Attributes %d\n\n", numAttributes);
-  printf("Cluster Centers Output\n");
-  printf("The first number is cluster number and the following data is arribute value\n");
+ // printf("Cluster Centers Output\n");
+ // printf("The first number is cluster number and the following data is arribute value\n");
   printf("=============================================================================\n\n");
 
-  for (i = 0; i < nclusters; i++)
+  /*for (i = 0; i < nclusters; i++)
   {
     printf("%d: ", i);
     for (j = 0; j < numAttributes; j++)
       printf("%f ", cluster_centres_par[i][j]);
     printf("\n\n");
-  }
+  }*/
   printf("Time for process: %f\n", timing);
 
   for (i = 0; i < nclusters; i++)
@@ -1720,12 +1720,13 @@ int main(int argc, char **argv)
     {
       if (!(fabs(cluster_centres_par[i][j] - cluster_centres_seq[i][j]) < ACCURACY))
       {
+        printf("ERR: (%d, %d): %5f %5f", i, j, cluster_centres_par[i][j], cluster_centres_seq[i][j]);
         different = 1;
-        break;
+        //break;
       }
     }
-    if (different)
-      break;
+    //if (different)
+     // break;
   }
 
   printf(different ? "TEST FAILED\n" : "TEST PASSED\n");
