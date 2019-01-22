@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "redukcija", "redukcija\redukcija.vcxproj", "{27DB5582-1830-4F68-A649-917154B336F6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{27DB5582-1830-4F68-A649-917154B336F6}.Debug|x64.ActiveCfg = Debug|x64
+		{27DB5582-1830-4F68-A649-917154B336F6}.Debug|x64.Build.0 = Debug|x64
+		{27DB5582-1830-4F68-A649-917154B336F6}.Release|x64.ActiveCfg = Release|x64
+		{27DB5582-1830-4F68-A649-917154B336F6}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FC564705-E0CF-41D2-B9B0-F6481230BFF4}
+	EndGlobalSection
+EndGlobal

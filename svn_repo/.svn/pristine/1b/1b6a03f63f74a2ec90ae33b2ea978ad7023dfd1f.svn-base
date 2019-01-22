@@ -1,0 +1,11 @@
+# C compiler
+CC = mpic++
+CCFLAGS = -lm -std=c++11
+
+prime: 
+	$(CC) $(CCFLAGS) dz2z1.cpp -o dz2z1
+	$(CC) $(CCFLAGS) dz2z2.cpp -o dz2z2
+	$(CC) $(CCFLAGS) dz2z3.cpp -o dz2z3
+
+clean:
+	rm -f dz2z1 dz2z2 dz2z3 result*

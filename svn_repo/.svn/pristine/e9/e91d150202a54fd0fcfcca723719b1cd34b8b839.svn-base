@@ -1,0 +1,4 @@
+./dz1z5 -i data/100
+./dz1z5 -i data/kdd_cup
+./dz1z5 -i data/204800.txt
+./dz1z5 -i data/819200.txt

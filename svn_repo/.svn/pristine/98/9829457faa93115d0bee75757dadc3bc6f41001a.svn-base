@@ -1,0 +1,6 @@
+./dz1z2 data/small/input/matrix1.txt data/small/input/matrix2t.txt result_small_par.txt
+./dz1z2 data/medium/input/matrix1.txt data/medium/input/matrix2t.txt result_medium_par.txt
+
+
+
+

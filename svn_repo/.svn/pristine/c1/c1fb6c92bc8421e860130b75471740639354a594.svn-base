@@ -1,0 +1,22 @@
+# mpi
+CC_MPI = mpic++
+CCFLAGS_MPI = -lm -std=c++11
+
+# omp
+CC_OMP = g++
+C_OMP = gcc 
+CC_FLAGS_OMP = -fopenmp -O2
+
+prime: 
+	$(CC_MPI) $(CCFLAGS_MPI) dz2z1.cpp -o dz2z1
+	$(CC_MPI) $(CCFLAGS_MPI) dz2z2.cpp -o dz2z2
+	$(CC_MPI) $(CCFLAGS_MPI) dz2z3.cpp -o dz2z3
+	$(CC_OMP) $(CC_FLAGS_OMP) dz1z1.cpp -o dz1z1 -lm 
+	$(CC_OMP) $(CC_FLAGS_OMP) dz1z2.cpp -o dz1z2 -lm 
+	$(CC_OMP) $(CC_FLAGS_OMP) dz1z3.cpp -o dz1z3 -lm 	
+	$(CC_OMP) $(CC_FLAGS_OMP) dz1z4.cpp -o dz1z4 -lm 
+	$(C_OMP) $(CC_FLAGS_OMP) dz1z5.c dz1z5.h -o dz1z5
+
+
+clean:
+	rm -f dz1z1 dz1z2 dz1z3 dz1z4 dz1z5 dz2z1 dz2z2 dz2z3 result*
